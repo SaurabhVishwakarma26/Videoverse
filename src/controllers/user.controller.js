@@ -218,7 +218,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", newRefreshToken, options)
-      .json(new ApiResponse(200, { accessToken }));
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed"
+        )
+      );
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
@@ -241,7 +247,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Passwords updated successfully"));
+    .json(new ApiResponse(200, {}, "Passwords updated successfully"));
 });
 
 const getCurrentUser = asyncHandler((req, res) => {
@@ -250,14 +256,14 @@ const getCurrentUser = asyncHandler((req, res) => {
     .json(new ApiResponse(200, req.user, "Current User fetched successfully"));
 });
 
-const updateAccountDetails = asyncHandler((req, res) => {
+const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
 
   if (!fullName || !email) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
